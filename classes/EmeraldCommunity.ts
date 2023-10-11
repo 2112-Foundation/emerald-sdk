@@ -227,6 +227,6 @@ class EmeraldCommunity {
             return await this.claimRewardPerNft(mint, 0);
         }));
     }
-
-
 }
+
+export default EmeraldCommunity;

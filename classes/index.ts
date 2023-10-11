@@ -1,2 +1,3 @@
 import Emerald from "./Emerald";
-export { Emerald }
+import EmeraldCommunity from "./EmeraldCommunity";
+export { Emerald, EmeraldCommunity }
