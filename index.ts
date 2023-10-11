@@ -1,2 +1,4 @@
 import {Emerald} from "./classes";
-export default Emerald;
+import {Connection} from "@solana/web3.js";
+
+const emerald = new Emerald(new Connection(""));

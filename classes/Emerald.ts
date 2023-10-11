@@ -13,13 +13,32 @@ import {
     CollectionPolicy,
     CommunityPool,
     createAddCollectionInstruction,
-    createAddCollectionPolicyInstruction, createClaimSingleInstruction,
+    createAddCollectionPolicyInstruction,
+    createClaimSingleInstruction,
     createInitialiseCommunityInstruction,
     createInitialiseUserAccountInstruction,
-    createInitialiseUserCommunityAccountInstruction, createStakeNftInstruction, createUnstakeNftInstruction,
+    createInitialiseUserCommunityAccountInstruction,
+    createStakeNftInstruction,
+    createUnstakeNftInstruction,
+    createInitialiseMainInstruction,
+    createUpdateFeesInstruction,
+    createWithdrawMainInstruction,
+
+    // TODO: Cover these three functions in the SDK.
+    // TODO: Cover these three functions in the SDK.
+    // TODO: Cover these three functions in the SDK.
+    // TODO: Cover these three functions in the SDK.
+    createLockCommunityInstruction,
+    createWithdrawCommunityInstruction,
+    createUpdateAdminInstruction,
+    // TODO: Cover these three functions in the SDK.
+    // TODO: Cover these three functions in the SDK.
+    // TODO: Cover these three functions in the SDK.
+    // TODO: Cover these three functions in the SDK.
+
     MainPool,
     PROGRAM_ID,
-    UserAccount, UserCommunityAccount
+    UserAccount, UserCommunityAccount, UpdateFeesInstructionArgs, InitialiseMainInstructionArgs
 } from "../lib/emerald-solita";
 import {BN} from "@coral-xyz/anchor";
 import {
@@ -35,7 +54,7 @@ class Emerald {
     public metaplex: Metaplex;
     public mainPool = MAIN_POOL;
 
-    private constructor(
+    constructor(
         connection: Connection,
     ) {
         this.connection = connection;
@@ -44,6 +63,183 @@ class Emerald {
 
     async getProtocolData() {
         return await MainPool.fromAccountAddress(this.connection, this.mainPool);
+    }
+
+    async initialiseProtocol(fees: InitialiseMainInstructionArgs) {
+        const protocolData = await MainPool.fromAccountAddress(this.connection, this.mainPool);
+        const { superAdmin } = protocolData;
+
+        const ix = createInitialiseMainInstruction(
+            {
+                superAdmin,
+                mainPool: this.mainPool,
+            },
+            {
+                ...fees
+            },
+            PROGRAM_ID
+        );
+
+        return ix;
+    }
+
+    async withdrawProtocolEarnings() {
+        const protocolData = await MainPool.fromAccountAddress(this.connection, this.mainPool);
+        const { superAdmin } = protocolData;
+
+        const ix = createWithdrawMainInstruction(
+            {
+                mainPool: this.mainPool,
+                superAdmin
+            },
+            PROGRAM_ID
+        );
+
+        return ix;
+    }
+
+    async lockCommunity(admin: PublicKey, communityId: number) {
+        const [communityPool] = PublicKey.findProgramAddressSync(
+            [
+                Buffer.from(COMMUNITY_SEED),
+                MAIN_POOL.toBuffer(),
+                (new BN(communityId)).toArrayLike(Buffer, "be", 4)
+            ],
+            PROGRAM_ID
+        );
+
+        const communityPoolData = await CommunityPool.fromAccountAddress(this.connection, communityPool);
+        const { coinMint, communityAdmin } = communityPoolData;
+
+        const rewardVault = getAssociatedTokenAddressSync(
+            coinMint,
+            communityPool,
+            true
+        );
+
+        const ix = createLockCommunityInstruction(
+            {
+                admin,
+                mainPool: this.mainPool,
+                communityPool,
+                rewardVault
+            },
+            {
+                communityIdx: communityId
+            },
+            PROGRAM_ID
+        );
+
+        return ix;
+    }
+
+    async withdrawCommunity(admin: PublicKey, communityId: number, amount: number) {
+        const [communityPool] = PublicKey.findProgramAddressSync(
+            [
+                Buffer.from(COMMUNITY_SEED),
+                MAIN_POOL.toBuffer(),
+                (new BN(communityId)).toArrayLike(Buffer, "be", 4)
+            ],
+            PROGRAM_ID
+        );
+
+        const communityPoolData = await CommunityPool.fromAccountAddress(this.connection, communityPool);
+        const { coinMint, communityAdmin } = communityPoolData;
+
+        const rewardVault = getAssociatedTokenAddressSync(
+            coinMint,
+            communityPool,
+            true
+        );
+
+        const withdrawAccount = getAssociatedTokenAddressSync(
+            coinMint,
+            communityAdmin
+        );
+
+        const ix = createWithdrawCommunityInstruction(
+            {
+                admin,
+                mainPool: this.mainPool,
+                communityPool,
+                withdrawAccount,
+                rewardVault,
+            },
+            {
+                communityIdx: communityId,
+                withdrawAmount: amount
+            },
+            PROGRAM_ID
+        )
+    }
+
+    async updateGlobalAdmin(newAdmin: PublicKey) {
+        const protocolData = await MainPool.fromAccountAddress(this.connection, this.mainPool);
+        const { superAdmin } = protocolData;
+
+        const ix = createUpdateAdminInstruction(
+            {
+                superAdmin,
+                mainPool: this.mainPool,
+            },
+            {
+                newAdmin
+            },
+            PROGRAM_ID
+        );
+
+        return ix;
+    }
+
+    async updateGlobalFees(fees: UpdateFeesInstructionArgs) {
+        const protocolData = await MainPool.fromAccountAddress(this.connection, this.mainPool);
+        const { superAdmin } = protocolData;
+
+        const ix = createUpdateFeesInstruction(
+            {
+                mainPool: this.mainPool,
+                superAdmin
+            },
+            {
+                ...fees
+            },
+            PROGRAM_ID
+        )
+    }
+
+    async getWhitelistedCollections(communityId: number) {
+        const [communityPool] = PublicKey.findProgramAddressSync(
+            [
+                Buffer.from(COMMUNITY_SEED),
+                MAIN_POOL.toBuffer(),
+                (new BN(communityId)).toArrayLike(Buffer, "be", 4)
+            ],
+            PROGRAM_ID
+        );
+
+        const communityPoolData = await CommunityPool.fromAccountAddress(this.connection, communityPool);
+        const { collectionsIdx } = communityPoolData;
+
+        const whitelistedCollections: PublicKey[] = [];
+
+        for (let i = 0; i < collectionsIdx; i++) {
+            const [collection] = PublicKey.findProgramAddressSync(
+                [
+                    Buffer.from(COLLECTION_SEED),
+                    communityPool.toBuffer(),
+                    new BN(i).toArrayLike(Buffer, "be", 4),
+                ],
+                PROGRAM_ID
+            );
+
+            whitelistedCollections.push(collection);
+        }
+
+        const collectionsDatas = await Promise.all(whitelistedCollections.map(async (collection) => {
+            return await Collection.fromAccountAddress(this.connection, collection);
+        }));
+
+        return collectionsDatas;
     }
 
     async createNewCommunity(rewardMint: PublicKey, admin: PublicKey) {
@@ -122,7 +318,7 @@ class Emerald {
             },
             {
                 verifiedCreator: !!verifiedCreator,
-                creatorKey: verifiedCreator,
+                creatorKey: verifiedCreator || new PublicKey(0),
                 communityIdx: 0,
                 masterCollectionKey: verifiedCollectionAddress,
                 masterEditionKey: new PublicKey(0)

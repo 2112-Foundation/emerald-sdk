@@ -596,6 +596,29 @@ createErrorFromNameLookup.set(
 )
 
 /**
+ * IncorrectSuperAdmin: 'Incorrect admin provided'
+ *
+ * @category Errors
+ * @category generated
+ */
+export class IncorrectSuperAdminError extends Error {
+  readonly code: number = 0x1789
+  readonly name: string = 'IncorrectSuperAdmin'
+  constructor() {
+    super('Incorrect admin provided')
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, IncorrectSuperAdminError)
+    }
+  }
+}
+
+createErrorFromCodeLookup.set(0x1789, () => new IncorrectSuperAdminError())
+createErrorFromNameLookup.set(
+  'IncorrectSuperAdmin',
+  () => new IncorrectSuperAdminError()
+)
+
+/**
  * Attempts to resolve a custom program error from the provided error code.
  * @category Errors
  * @category generated

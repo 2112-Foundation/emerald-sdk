@@ -44,7 +44,7 @@ export const stakeNftStruct = new beet.BeetArgsStruct<
  *
  * @property [_writable_, **signer**] user
  * @property [_writable_] mainPool
- * @property [] collection
+ * @property [_writable_] collection
  * @property [] collectionPolicy
  * @property [_writable_] communityPool
  * @property [_writable_] userAccount
@@ -117,7 +117,7 @@ export function createStakeNftInstruction(
     },
     {
       pubkey: accounts.collection,
-      isWritable: false,
+      isWritable: true,
       isSigner: false,
     },
     {
