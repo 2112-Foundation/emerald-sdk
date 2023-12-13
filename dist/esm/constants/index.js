@@ -1,0 +1,12 @@
+import { PublicKey } from "@solana/web3.js";
+import { PROGRAM_ID } from "../lib/emerald-solita";
+export var MAIN_SEED = "main";
+export var SNAPSHOT_PEG_SEED = "snapshot_peg";
+export var COMMUNITY_SEED = "community_pool";
+export var USER_ACCOUNT_SEED = "user_account";
+export var USER_COMMUNITY_ACCOUNT_SEED = "user_community_account";
+export var COLLECTION_POLICY_SEED = "collection_policy";
+export var NFT_TICKET = "nft_ticket";
+export var COLLECTION_SEED = "collection";
+var MAIN_POOL = PublicKey.findProgramAddressSync([Buffer.from(MAIN_SEED)], PROGRAM_ID)[0];
+export { MAIN_POOL };

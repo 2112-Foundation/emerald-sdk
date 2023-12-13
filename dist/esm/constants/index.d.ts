@@ -1,0 +1,11 @@
+import { PublicKey } from "@solana/web3.js";
+export declare const MAIN_SEED = "main";
+export declare const SNAPSHOT_PEG_SEED = "snapshot_peg";
+export declare const COMMUNITY_SEED = "community_pool";
+export declare const USER_ACCOUNT_SEED = "user_account";
+export declare const USER_COMMUNITY_ACCOUNT_SEED = "user_community_account";
+export declare const COLLECTION_POLICY_SEED = "collection_policy";
+export declare const NFT_TICKET = "nft_ticket";
+export declare const COLLECTION_SEED = "collection";
+declare const MAIN_POOL: PublicKey;
+export { MAIN_POOL };
